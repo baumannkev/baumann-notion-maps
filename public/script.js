@@ -26,7 +26,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   
     async function geocodeAddress(addr) {
-      const url = `/.netlify/functions/server/api/geocode?address=${encodeURIComponent(addr)}`;
+      const url = `/api/geocode?address=${encodeURIComponent(addr)}`;
       let res = await fetch(url);
       let j = await res.json();
       if (j.success) return { lat: +j.lat, lon: +j.lon };
@@ -36,7 +36,7 @@ document.addEventListener("DOMContentLoaded", () => {
         ? null
         : `${addr}, CA, USA`;
       if (fallback) {
-        res = await fetch(`/.netlify/functions/server/api/geocode?address=${encodeURIComponent(fallback)}`);
+        res = await fetch(`/api/geocode?address=${encodeURIComponent(fallback)}`);
         j = await res.json();
         if (j.success) return { lat: +j.lat, lon: +j.lon };
       }
@@ -53,7 +53,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   
     async function loadDatabases() {
-      const res = await fetch(`/.netlify/functions/server/api/databases`);
+      const res = await fetch(`/api/databases`);
       const { results } = await res.json();
       dedupe(results).forEach(db => {
         const opt = document.createElement("option");
@@ -68,7 +68,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!dbId) return mapSection.style.display = "none";
   
       markerGroup.clearLayers();
-      const res = await fetch(`/.netlify/functions/server/api/databases/${dbId}/pages`);
+      const res = await fetch(`/server/api/databases/${dbId}/pages`);
       const { results } = await res.json();
   
       // geocode all in parallel

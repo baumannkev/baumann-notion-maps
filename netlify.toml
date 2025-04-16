@@ -1,6 +1,6 @@
 [build]
-  functions = "netlify/functions"
   publish = "public"
+  functions = "netlify/functions"
 
 [functions]
   node_bundler = "esbuild"
@@ -10,7 +10,3 @@
   to = "/.netlify/functions/server/api/:splat"
   status = 200
   force = true
-
-[dev]
-  # disable Edge Functions during local dev
-  edge_functions = false
