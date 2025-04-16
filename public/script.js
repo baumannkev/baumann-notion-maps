@@ -1,7 +1,7 @@
 document.addEventListener("DOMContentLoaded", () => {
     let map, markerGroup, currentDbId;
   
-    // ─── Helpers ─────────────────────────────────────────────────
+    // ─── Helpers ──────────────────────────────────────────────────────
     function dedupe(dbs) {
       const seen = new Set();
       return dbs.filter(d => {
@@ -27,8 +27,6 @@ document.addEventListener("DOMContentLoaded", () => {
       let res = await fetch(base);
       let j   = await res.json();
       if (j.success) return { lat: +j.lat, lon: +j.lon };
-  
-      // fallback
       if (!addr.match(/\b(CA|USA)\b/)) {
         res = await fetch(base + `, CA, USA`);
         j   = await res.json();
@@ -46,7 +44,7 @@ document.addEventListener("DOMContentLoaded", () => {
       return `${slug}-${rand}`;
     }
   
-    // ─── Initialize Leaflet ────────────────────────────────────────
+    // ─── Initialize Leaflet ────────────────────────────────────────────
     function initMap() {
       map = L.map("map").setView([37.7749, -122.4194], 12);
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -55,9 +53,49 @@ document.addEventListener("DOMContentLoaded", () => {
       markerGroup = L.featureGroup().addTo(map);
     }
   
-    // ─── Load sidebar list of maps (Notion DBs) ────────────────────
+    // ─── Render pins for a database ────────────────────────────────────
+    async function loadMapForDatabase(dbId) {
+      markerGroup.clearLayers();
+      const res = await fetch(`/api/databases/${dbId}/pages`);
+      const { results } = await res.json();
+  
+      const spots = await Promise.all(results.map(async page => {
+        const title = getPageTitle(page);
+        const addr  = getAddress(page);
+        let lat = page.properties.Latitude?.rich_text[0]?.plain_text;
+        let lon = page.properties.Longitude?.rich_text[0]?.plain_text;
+        if (!lat || !lon) {
+          const g = await geocodeAddress(addr);
+          if (g) { lat = g.lat; lon = g.lon; }
+        }
+        return { title, addr, lat: +lat, lon: +lon };
+      }));
+  
+      spots.forEach(s => {
+        if (s.lat && s.lon) {
+          // If title === address, only show once
+          const popupContent =
+            s.title === s.addr
+              ? `<strong>${s.addr}</strong>`
+              : `<strong>${s.title}</strong><br>${s.addr}`;
+  
+          L.marker([s.lat, s.lon])
+            .addTo(markerGroup)
+            .bindPopup(popupContent);
+        }
+      });
+  
+      setTimeout(() => {
+        map.invalidateSize();
+        if (markerGroup.getLayers().length) {
+          map.fitBounds(markerGroup.getBounds(), { padding: [20,20] });
+        }
+      }, 100);
+    }
+  
+    // ─── Load sidebar list of maps (Notion DBs) ───────────────────────
     async function loadDatabases() {
-      const res     = await fetch("/api/databases");
+      const res = await fetch("/api/databases");
       const { results } = await res.json();
       const mapList = document.getElementById("mapList");
       mapList.innerHTML = "";
@@ -75,78 +113,77 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     }
   
-    // ─── Open the Edit View ────────────────────────────────────────
+    // ─── Open the editor sidebar for a map ────────────────────────────
     async function openEditView(dbId, dbName) {
       currentDbId = dbId;
+  
       document.getElementById("mapListView").style.display = "none";
       document.getElementById("mapEditView").style.display = "block";
   
-      // DB select
       document.getElementById("dbSelect").innerHTML = `<option>${dbName}</option>`;
-  
-      // Map name & URL
       const nameInput = document.getElementById("mapName");
       nameInput.value = dbName;
       updateUrl();
       nameInput.oninput = updateUrl;
   
-      // Load DB properties for marker color & visible columns
       await loadDbProperties(dbId);
+  
+      // **Show the markers in edit view**:
+      await loadMapForDatabase(dbId);
     }
   
-    // ─── Fetch DB properties & populate controls ────────────────────
+    // ─── Fetch and render DB properties controls ───────────────────────
     async function loadDbProperties(dbId) {
-      const res     = await fetch(`/api/databases/${dbId}`);
+      const res = await fetch(`/api/databases/${dbId}`);
       const { properties } = await res.json();
   
       const colorSelect = document.getElementById("markerColorSelect");
-      const visContainer = document.getElementById("visibleColumns");
+      const visCont     = document.getElementById("visibleColumns");
       colorSelect.innerHTML = `<option value="">None</option>`;
-      visContainer.innerHTML = "";
+      visCont.innerHTML = "";
   
       Object.entries(properties).forEach(([key, prop]) => {
-        // marker color options: only select / multi_select
         if (prop.type === "select" || prop.type === "multi_select") {
           const opt = document.createElement("option");
           opt.value = key;
           opt.textContent = key;
           colorSelect.append(opt);
         }
-        // visible columns: all properties
         const lbl = document.createElement("label");
         lbl.innerHTML = `<input type="checkbox" value="${key}" checked /> ${key}`;
-        visContainer.append(lbl);
+        visCont.append(lbl);
       });
     }
   
-    // ─── Copy URL & Save Map ────────────────────────────────────────
+    // ─── URL generation & actions ────────────────────────────────────
     function updateUrl() {
       const name = document.getElementById("mapName").value.trim() || "map";
       const slug = makeSlug(name);
-      document.getElementById("mapUrl").value = `${window.location.origin}/map/${slug}`;
+      document.getElementById("mapUrl").value =
+        `${window.location.origin}/map/${slug}`;
     }
     document.getElementById("copyBtn").onclick = () => {
       const urlBox = document.getElementById("mapUrl");
       urlBox.select();
       document.execCommand("copy");
-      alert("Map URL copied!");
+      alert("Copied!");
     };
     document.getElementById("saveMap").onclick = () => {
       const config = {
         dbId: currentDbId,
         name: document.getElementById("mapName").value,
-        url: document.getElementById("mapUrl").value,
+        url:  document.getElementById("mapUrl").value,
         markerColorProp: document.getElementById("markerColorSelect").value,
         visibleColumns: Array.from(
           document.querySelectorAll("#visibleColumns input:checked")
-        ).map((inp) => inp.value),
+        ).map(i => i.value),
       };
-      console.log("Save config:", config);
-      alert("Map saved – copy the URL into Notion.");
+      console.log("Saved config:", config);
+      alert("Map saved! Paste URL into Notion.");
     };
   
-    // ─── Go back to list ────────────────────────────────────────────
-    document.getElementById("goBack").onclick = (e) => {
+    // ─── Go back to list view ────────────────────────────────────────
+    document.getElementById("goBack").onclick = e => {
       e.preventDefault();
       document.getElementById("mapEditView").style.display = "none";
       document.getElementById("mapListView").style.display = "block";
@@ -158,8 +195,16 @@ document.addEventListener("DOMContentLoaded", () => {
       dd.style.display = dd.style.display === "flex" ? "none" : "flex";
     };
   
-    // ─── Kickoff ────────────────────────────────────────────────────
+    // ─── Bootstrap & URL detection ──────────────────────────────────
     initMap();
+  
+    const parts = window.location.pathname.split("/").filter(Boolean);
+    if (parts[0] === "map" && parts[1]) {
+      document.querySelector(".sidebar").style.display = "none";
+      loadMapForDatabase(parts[1]);
+      return;
+    }
+  
     loadDatabases();
   });
   
