@@ -55,6 +55,11 @@
           </div>
 
           <div class="form-group">
+            <label>Number of locations</label>
+            <div id="locationCount">0</div>
+          </div>
+
+          <div class="form-group">
             <label>Select which column to use as marker color</label>
             <select id="markerColorSelect">
               <option value="">None</option>
@@ -73,6 +78,8 @@
       </aside>
 
       <main class="map-panel">
+        <!-- Embed mode count -->
+        <div id="embedCount" class="embed-count" style="display:none;">0 locations</div>
         <div id="map"></div>
       </main>
     </div>

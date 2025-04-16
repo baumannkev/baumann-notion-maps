@@ -60,6 +60,19 @@ body {
 }
 #map { width: 100%; height: 100%; }
 
+/* Embed count badge */
+.embed-count {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(255,255,255,0.9);
+  color: #333;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  z-index: 1000;
+}
+
 /* Map Cards */
 .map-card {
   background: #39405c;
@@ -104,6 +117,12 @@ body {
   border-radius: 4px;
   background: #475073;
   color: white;
+}
+#locationCount {
+  padding: 8px;
+  background: #39405c;
+  border-radius: 4px;
+  text-align: center;
 }
 #saveMap {
   padding: 10px;

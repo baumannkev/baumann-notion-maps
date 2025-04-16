@@ -25,23 +25,14 @@ document.addEventListener("DOMContentLoaded", () => {
     async function geocodeAddress(addr) {
       const base = `/api/geocode?address=${encodeURIComponent(addr)}`;
       let res = await fetch(base);
-      let j   = await res.json();
+      let j = await res.json();
       if (j.success) return { lat: +j.lat, lon: +j.lon };
-      if (!addr.match(/\b(CA|USA)\b/)) {
+      if (!/\b(CA|USA)\b/.test(addr)) {
         res = await fetch(base + `, CA, USA`);
         j   = await res.json();
         if (j.success) return { lat: +j.lat, lon: +j.lon };
       }
       return null;
-    }
-  
-    function makeSlug(name) {
-      const slug = name
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, "-")
-        .replace(/^-+|-+$/g, "");
-      const rand = Math.random().toString(36).substring(2, 8);
-      return `${slug}-${rand}`;
     }
   
     // ─── Initialize Leaflet ────────────────────────────────────────────
@@ -53,13 +44,14 @@ document.addEventListener("DOMContentLoaded", () => {
       markerGroup = L.featureGroup().addTo(map);
     }
   
-    // ─── Render pins for a database ────────────────────────────────────
-    async function loadMapForDatabase(dbId) {
+    // ─── Render pins for a database & update counts ───────────────────
+    async function loadMapForDatabase(dbId, inEdit = false) {
       markerGroup.clearLayers();
       const res = await fetch(`/api/databases/${dbId}/pages`);
       const { results } = await res.json();
   
-      const spots = await Promise.all(results.map(async page => {
+      const spots = [];
+      for (const page of results) {
         const title = getPageTitle(page);
         const addr  = getAddress(page);
         let lat = page.properties.Latitude?.rich_text[0]?.plain_text;
@@ -68,23 +60,30 @@ document.addEventListener("DOMContentLoaded", () => {
           const g = await geocodeAddress(addr);
           if (g) { lat = g.lat; lon = g.lon; }
         }
-        return { title, addr, lat: +lat, lon: +lon };
-      }));
-  
-      spots.forEach(s => {
-        if (s.lat && s.lon) {
-          // If title === address, only show once
-          const popupContent =
-            s.title === s.addr
-              ? `<strong>${s.addr}</strong>`
-              : `<strong>${s.title}</strong><br>${s.addr}`;
-  
-          L.marker([s.lat, s.lon])
-            .addTo(markerGroup)
-            .bindPopup(popupContent);
+        if (lat && lon) {
+          spots.push({ title, addr, lat: +lat, lon: +lon });
         }
+      }
+  
+      // Add markers
+      spots.forEach(s => {
+        L.marker([s.lat, s.lon])
+          .addTo(markerGroup)
+          .bindPopup(`<strong>${s.addr}</strong>`);
       });
   
+      // Update counts
+      const count = spots.length;
+      document.getElementById("locationCount").textContent = count;
+      const embedBadge = document.getElementById("embedCount");
+      embedBadge.textContent = `${count} locations`;
+      if (!inEdit) {
+        embedBadge.style.display = "block";
+      } else {
+        embedBadge.style.display = "none";
+      }
+  
+      // Fit map
       setTimeout(() => {
         map.invalidateSize();
         if (markerGroup.getLayers().length) {
@@ -116,20 +115,29 @@ document.addEventListener("DOMContentLoaded", () => {
     // ─── Open the editor sidebar for a map ────────────────────────────
     async function openEditView(dbId, dbName) {
       currentDbId = dbId;
-  
       document.getElementById("mapListView").style.display = "none";
       document.getElementById("mapEditView").style.display = "block";
   
       document.getElementById("dbSelect").innerHTML = `<option>${dbName}</option>`;
       const nameInput = document.getElementById("mapName");
       nameInput.value = dbName;
-      updateUrl();
-      nameInput.oninput = updateUrl;
+      // Embed link uses DB ID directly:
+      document.getElementById("mapUrl").value =
+        `${window.location.origin}/map/${dbId}`;
   
+      // No slug logic needed any more
+      document.getElementById("copyBtn").onclick = () => {
+        const urlBox = document.getElementById("mapUrl");
+        urlBox.select();
+        document.execCommand("copy");
+        alert("Copied!");
+      };
+  
+      // Load property controls
       await loadDbProperties(dbId);
   
-      // **Show the markers in edit view**:
-      await loadMapForDatabase(dbId);
+      // Show markers in the edit map
+      await loadMapForDatabase(dbId, true);
     }
   
     // ─── Fetch and render DB properties controls ───────────────────────
@@ -155,19 +163,7 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     }
   
-    // ─── URL generation & actions ────────────────────────────────────
-    function updateUrl() {
-      const name = document.getElementById("mapName").value.trim() || "map";
-      const slug = makeSlug(name);
-      document.getElementById("mapUrl").value =
-        `${window.location.origin}/map/${slug}`;
-    }
-    document.getElementById("copyBtn").onclick = () => {
-      const urlBox = document.getElementById("mapUrl");
-      urlBox.select();
-      document.execCommand("copy");
-      alert("Copied!");
-    };
+    // ─── Save map stub ────────────────────────────────────────────────
     document.getElementById("saveMap").onclick = () => {
       const config = {
         dbId: currentDbId,
@@ -200,11 +196,14 @@ document.addEventListener("DOMContentLoaded", () => {
   
     const parts = window.location.pathname.split("/").filter(Boolean);
     if (parts[0] === "map" && parts[1]) {
+      // Embed mode
       document.querySelector(".sidebar").style.display = "none";
-      loadMapForDatabase(parts[1]);
+      document.getElementById("embedCount").style.display = "block";
+      loadMapForDatabase(parts[1], false);
       return;
     }
   
+    // App mode
     loadDatabases();
   });
   
