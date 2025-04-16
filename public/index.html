@@ -12,6 +12,7 @@
 </head>
 <body>
   <div id="app">
+    <!-- Top bar (hidden in embed mode via script) -->
     <header class="topbar">
       <div class="logo">📍 Notion Maps</div>
       <div class="menu">
@@ -25,13 +26,12 @@
     </header>
 
     <div class="container">
+      <!-- Main‐site sidebar -->
       <aside class="sidebar">
-        <!-- LIST VIEW -->
         <div id="mapListView">
           <h2>My maps</h2>
           <div id="mapList"></div>
         </div>
-        <!-- EDIT VIEW -->
         <div id="mapEditView" style="display:none;">
           <a href="#" id="goBack">← Go back</a>
           <h3>Editing map</h3>
@@ -55,7 +55,7 @@
           </div>
 
           <div class="form-group">
-            <label>Number of locations</label>
+            <label>Locations count</label>
             <div id="locationCount">0</div>
           </div>
 
@@ -77,9 +77,21 @@
         </div>
       </aside>
 
+      <!-- Embed‐mode marker list sidebar (toggled via toolbar) -->
+      <aside class="embedSidebar" style="display:none;">
+        <h2>Map markers</h2>
+        <div class="embed-subtitle">List of all the map markers</div>
+        <div id="markerList"></div>
+      </aside>
+
       <main class="map-panel">
-        <!-- Embed mode count -->
-        <div id="embedCount" class="embed-count" style="display:none;">0 locations</div>
+        <!-- Toolbar for embed mode -->
+        <div class="embedToolbar" style="display:none;">
+          <button id="toggleListBtn" title="Toggle marker list">≡</button>
+          <button title="Search">🔍</button>
+          <button title="Settings">⚙️</button>
+          <button title="Info">🗺️</button>
+        </div>
         <div id="map"></div>
       </main>
     </div>

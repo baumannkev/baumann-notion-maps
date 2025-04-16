@@ -48,7 +48,8 @@ body {
 
 /* Layout */
 .container { display: flex; flex: 1; height: 100%; }
-.sidebar {
+.sidebar,
+.embedSidebar {
   width: 300px;
   background: #282e3f;
   padding: 20px;
@@ -60,17 +61,40 @@ body {
 }
 #map { width: 100%; height: 100%; }
 
-/* Embed count badge */
-.embed-count {
+/* Embed toolbar */
+.embedToolbar {
   position: absolute;
-  top: 10px;
-  right: 10px;
-  background: rgba(255,255,255,0.9);
-  color: #333;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 0.9rem;
+  top: 50px;
+  left: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
   z-index: 1000;
+}
+.embedToolbar button {
+  background: #39405c;
+  border: none;
+  color: white;
+  font-size: 1.2rem;
+  padding: 8px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.embedToolbar button:hover {
+  background: #475073;
+}
+
+/* Embed sidebar */
+.embedSidebar {
+  background: #202942;
+}
+.embedSidebar h2 {
+  margin-bottom: 6px;
+}
+.embed-subtitle {
+  font-size: 0.9rem;
+  color: #c7c7d7;
+  margin-bottom: 12px;
 }
 
 /* Map Cards */
@@ -84,10 +108,7 @@ body {
 }
 .map-card:hover { background: #475073; }
 .map-title { font-weight: bold; }
-.map-subtitle {
-  font-size: 0.85rem;
-  color: #c7c7d7;
-}
+.map-subtitle { font-size: 0.85rem; color: #c7c7d7; }
 
 /* Form Groups */
 .form-group { margin: 15px 0; display: flex; flex-direction: column; }
@@ -150,3 +171,30 @@ body {
   color: #ddd;
 }
 #visibleColumns input { margin-right: 8px; }
+
+/* Marker List Items */
+.marker-item {
+  padding: 12px;
+  background: #39405c;
+  border-radius: 6px;
+  margin-bottom: 10px;
+}
+.marker-item .marker-title {
+  font-size: 1rem;
+  font-weight: bold;
+  margin-bottom: 6px;
+}
+.marker-item .marker-prop {
+  margin-left: 16px;
+  margin-bottom: 4px;
+}
+.marker-item .prop-name {
+  font-weight: bold;
+  margin-right: 4px;
+  color: #8fa6ff;
+}
+.marker-item a {
+  color: #3cb371;
+  text-decoration: none;
+}
+.marker-item a:hover { text-decoration: underline; }
