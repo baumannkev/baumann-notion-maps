@@ -1,10 +1,13 @@
 {
-  "name": "web-form-with-express-example",
+  "name": "baumann-notion-maps",
   "version": "1.0.0",
-  "description": "Internal Notion intergration demo app using Express.js for a server.",
-  "main": "server.js",
+  "description": "Interactive map synced with Notion databases, deployed on Netlify using serverless functions.",
   "scripts": {
-    "start": "node server.js"
+    "dev": "netlify dev",
+    "build": "netlify build"
+  },
+  "devDependencies": {
+    "netlify-cli": "^12.0.0"
   },
   "dependencies": {
     "@notionhq/client": "^2.3.0",
@@ -19,8 +22,10 @@
   "author": "Kevin Baumann",
   "license": "MIT",
   "keywords": [
-    "node",
     "notion",
-    "express"
+    "map",
+    "leaflet",
+    "serverless",
+    "netlify"
   ]
 }

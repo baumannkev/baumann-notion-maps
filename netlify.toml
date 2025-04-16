@@ -4,3 +4,7 @@
 
 [functions]
   node_bundler = "esbuild"
+
+[dev]
+  # disable Edge Functions during local dev
+  edge_functions = false

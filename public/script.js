@@ -1,173 +1,105 @@
 document.addEventListener("DOMContentLoaded", () => {
     const databaseSelect = document.getElementById("databaseSelect");
     const mapSection = document.getElementById("mapSection");
-    let map; // Leaflet map instance
-    let markerGroup; // Feature group for markers
+    let map;
+    let markerGroup;
   
-    // Deduplicate databases by ID
-    function deduplicateDatabases(databases) {
+    // Dedupe by ID
+    function dedupe(dbs) {
       const seen = new Set();
-      return databases.filter((db) => {
-        if (seen.has(db.id)) {
-          return false;
-        }
-        seen.add(db.id);
+      return dbs.filter(d => {
+        if (seen.has(d.id)) return false;
+        seen.add(d.id);
         return true;
       });
     }
   
-    // Get the title from the Notion page by dynamically finding the title property
     function getPageTitle(page) {
-      const titlePropKey = Object.keys(page.properties).find(
-        (key) => page.properties[key].type === "title"
-      );
-      if (!titlePropKey) return "No title property found";
-      const titleArr = page.properties[titlePropKey]?.title || [];
-      return titleArr.length > 0 ? titleArr[0].plain_text : "No title text";
+      const key = Object.keys(page.properties)
+        .find(k => page.properties[k].type === "title");
+      const arr = page.properties[key]?.title || [];
+      return arr[0]?.plain_text || "No title";
     }
   
-    // In this case, we assume the title property holds the address
     function getAddress(page) {
       return getPageTitle(page);
     }
   
-    // Geocode an address using the backend endpoint.
-    // If no results are found, it retries with ", CA, USA" appended.
-    async function geocodeAddress(address) {
-      try {
-        let res = await fetch(
-          `/api/geocode?address=${encodeURIComponent(address)}`
-        );
-        let data = await res.json();
-        if (data.success) {
-          return { lat: parseFloat(data.lat), lon: parseFloat(data.lon) };
-        } else {
-          console.warn(`Initial geocoding failed for ${address}: ${data.message}`);
-          // If the address doesn't include "ca" or "usa", try appending ", CA, USA"
-          if (
-            !address.toLowerCase().includes("ca") &&
-            !address.toLowerCase().includes("usa")
-          ) {
-            const newAddress = address + ", CA, USA";
-            console.log(`Retrying geocoding with: ${newAddress}`);
-            let res2 = await fetch(
-              `/api/geocode?address=${encodeURIComponent(newAddress)}`
-            );
-            let data2 = await res2.json();
-            if (data2.success) {
-              return { lat: parseFloat(data2.lat), lon: parseFloat(data2.lon) };
-            } else {
-              console.error(
-                `Geocoding retry failed for ${newAddress}: ${data2.message}`
-              );
-              return null;
-            }
-          }
-          return null;
-        }
-      } catch (error) {
-        console.error("Error in geocoding:", error);
-        return null;
+    async function geocodeAddress(addr) {
+      const url = `/.netlify/functions/server/api/geocode?address=${encodeURIComponent(addr)}`;
+      let res = await fetch(url);
+      let j = await res.json();
+      if (j.success) return { lat: +j.lat, lon: +j.lon };
+  
+      // retry with ", CA, USA"
+      const fallback = addr.includes("CA") || addr.includes("USA")
+        ? null
+        : `${addr}, CA, USA`;
+      if (fallback) {
+        res = await fetch(`/.netlify/functions/server/api/geocode?address=${encodeURIComponent(fallback)}`);
+        j = await res.json();
+        if (j.success) return { lat: +j.lat, lon: +j.lon };
       }
+      console.warn("Geocode fail:", addr);
+      return null;
     }
   
-    // Initialize the Leaflet map.
     function initMap() {
-      map = L.map("map").setView([37.7749, -122.4194], 12); // Default center: San Francisco
+      map = L.map("map").setView([37.7749, -122.4194], 12);
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution:
-          '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        attribution: '&copy; OpenStreetMap contributors'
       }).addTo(map);
-  
-      // Create a feature group to hold all markers.
       markerGroup = L.featureGroup().addTo(map);
     }
   
-    // Load databases from the backend and populate the select element.
     async function loadDatabases() {
-      const res = await fetch("/api/databases");
-      const data = await res.json();
-      let databases = data.results;
-      databases = deduplicateDatabases(databases);
-      databases.forEach((db) => {
-        const option = document.createElement("option");
-        option.value = db.id;
-        option.textContent = db.title[0]?.plain_text || "(Untitled Database)";
-        databaseSelect.appendChild(option);
+      const res = await fetch(`/.netlify/functions/server/api/databases`);
+      const { results } = await res.json();
+      dedupe(results).forEach(db => {
+        const opt = document.createElement("option");
+        opt.value = db.id;
+        opt.textContent = db.title[0]?.plain_text || "(Untitled)";
+        databaseSelect.appendChild(opt);
       });
     }
   
-    // Load pages from the selected database and add markers to the map.
-    // This version processes geocoding concurrently.
-    async function loadPages(dbId) {
-      const res = await fetch(`/api/databases/${dbId}/pages`);
-      const data = await res.json();
+    databaseSelect.addEventListener("change", async e => {
+      const dbId = e.target.value;
+      if (!dbId) return mapSection.style.display = "none";
   
-      // Clear existing markers from the map.
       markerGroup.clearLayers();
+      const res = await fetch(`/.netlify/functions/server/api/databases/${dbId}/pages`);
+      const { results } = await res.json();
   
-      // Process all pages concurrently using Promise.all.
-      const geocodePromises = data.results.map(async (page) => {
-        const pageTitle = getPageTitle(page);
-        const address = getAddress(page);
+      // geocode all in parallel
+      const jobs = results.map(async page => {
+        const title = getPageTitle(page);
+        const addr  = getAddress(page);
   
-        let lat = null,
-          lon = null;
-        // Check for existing latitude/longitude from Notion properties.
-        if (
-          page.properties["Latitude"] &&
-          page.properties["Latitude"].type === "rich_text" &&
-          page.properties["Latitude"].rich_text.length > 0
-        ) {
-          lat = parseFloat(page.properties["Latitude"].rich_text[0].plain_text);
-        }
-        if (
-          page.properties["Longitude"] &&
-          page.properties["Longitude"].type === "rich_text" &&
-          page.properties["Longitude"].rich_text.length > 0
-        ) {
-          lon = parseFloat(page.properties["Longitude"].rich_text[0].plain_text);
-        }
-        // If coordinates are missing, perform geocoding.
-        if (!lat || !lon) {
-          const geo = await geocodeAddress(address);
-          if (geo) {
-            lat = geo.lat;
-            lon = geo.lon;
-          }
-        }
-        return { pageTitle, address, lat, lon };
-      });
-  
-      // Wait for all geocoding to complete.
-      const results = await Promise.all(geocodePromises);
-  
-      // Add markers for pages where geocoding succeeded.
-      results.forEach(({ pageTitle, address, lat, lon }) => {
+        // try props first
+        let lat = page.properties.Latitude?.rich_text[0]?.plain_text;
+        let lon = page.properties.Longitude?.rich_text[0]?.plain_text;
         if (lat && lon) {
-          const marker = L.marker([lat, lon]).bindPopup(
-            `<strong>${pageTitle}</strong><br>${address}`
-          );
-          markerGroup.addLayer(marker);
+          return { title, addr, lat: +lat, lon: +lon };
+        }
+        return { title, addr, ...(await geocodeAddress(addr) || {}) };
+      });
+  
+      const spots = await Promise.all(jobs);
+      spots.forEach(s => {
+        if (s.lat && s.lon) {
+          L.marker([s.lat, s.lon])
+           .addTo(markerGroup)
+           .bindPopup(`<strong>${s.title}</strong><br>${s.addr}`);
         }
       });
   
-      // Reveal the map section.
       mapSection.style.display = "block";
       setTimeout(() => {
         map.invalidateSize();
-        if (markerGroup.getLayers().length > 0) {
-          map.fitBounds(markerGroup.getBounds(), { padding: [20, 20] });
-        }
+        if (markerGroup.getLayers().length)
+          map.fitBounds(markerGroup.getBounds(), { padding: [20,20] });
       }, 100);
-    }
-  
-    databaseSelect.addEventListener("change", (e) => {
-      if (e.target.value) {
-        loadPages(e.target.value);
-      } else {
-        mapSection.style.display = "none";
-      }
     });
   
     initMap();
