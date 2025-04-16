@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Notion Maps - Select Database</title>
+    <!-- Using Water.css for a minimal clean look -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css">
+    
+    <!-- Leaflet CSS (integrity and crossorigin removed) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css">
+  </head>
+  <body>
+    <h1>🗺️ Notion Maps</h1>
+
+    <section>
+      <h2>Choose a Notion Database</h2>
+      <select id="databaseSelect">
+        <option value="">-- Select a Database --</option>
+      </select>
+    </section>
+
+    <section id="mapSection" style="display:none; margin-top:2em;">
+      <h2>Map View</h2>
+      <div id="map" style="height: 400px;"></div>
+    </section>
+
+    <!-- Leaflet JS (integrity and crossorigin removed) -->
+    <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+    <script src="/script.js"></script>
+  </body>
+</html>

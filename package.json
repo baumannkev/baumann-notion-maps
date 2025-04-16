@@ -1,0 +1,26 @@
+{
+  "name": "web-form-with-express-example",
+  "version": "1.0.0",
+  "description": "Internal Notion intergration demo app using Express.js for a server.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "@notionhq/client": "^2.3.0",
+    "dotenv": "^16.3.1",
+    "express": "^4.21.2",
+    "node-fetch": "^3.3.2",
+    "serverless-http": "^3.2.0"
+  },
+  "engines": {
+    "node": "14.x"
+  },
+  "author": "Kevin Baumann",
+  "license": "MIT",
+  "keywords": [
+    "node",
+    "notion",
+    "express"
+  ]
+}
