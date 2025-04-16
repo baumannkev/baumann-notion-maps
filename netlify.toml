@@ -1,12 +1,25 @@
 [build]
-  publish = "public"
+  publish   = "public"
   functions = "netlify/functions"
 
 [functions]
   node_bundler = "esbuild"
 
+# 1️⃣ Proxy our API calls to the function
 [[redirects]]
-  from = "/api/*"
-  to = "/.netlify/functions/server/api/:splat"
+  from    = "/api/*"
+  to      = "/.netlify/functions/server/api/:splat"
+  status  = 200
+  force   = true
+
+# 2️⃣ Serve the same index.html for any /map/* URL
+[[redirects]]
+  from   = "/map/*"
+  to     = "/index.html"
   status = 200
-  force = true
+
+# (Optional) You could add a catch‑all SPA fallback for everything else:
+# [[redirects]]
+#   from   = "/*"
+#   to     = "/index.html"
+#   status = 200
