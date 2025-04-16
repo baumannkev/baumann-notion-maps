@@ -1,31 +1,83 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="UTF-8" />
-    <title>Notion Maps - Select Database</title>
-    <!-- Using Water.css for a minimal clean look -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css">
-    
-    <!-- Leaflet CSS (integrity and crossorigin removed) -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css">
-  </head>
-  <body>
-    <h1>🗺️ Notion Maps</h1>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Notion Maps</title>
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css"
+  />
+  <link rel="stylesheet" href="/style.css" />
+  <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+</head>
+<body>
+  <div id="app">
+    <header class="topbar">
+      <div class="logo">📍 Notion Maps</div>
+      <div class="menu">
+        <button id="menuBtn">☰</button>
+        <div id="dropdown" class="dropdown">
+          <a href="#">🗺️ My maps</a>
+          <a href="#">👤 Account</a>
+          <a href="#">🚪 Logout</a>
+        </div>
+      </div>
+    </header>
 
-    <section>
-      <h2>Choose a Notion Database</h2>
-      <select id="databaseSelect">
-        <option value="">-- Select a Database --</option>
-      </select>
-    </section>
+    <div class="container">
+      <aside class="sidebar">
+        <!-- LIST VIEW -->
+        <div id="mapListView">
+          <h2>My maps</h2>
+          <div id="mapList"></div>
+        </div>
+        <!-- EDIT VIEW -->
+        <div id="mapEditView" style="display:none;">
+          <a href="#" id="goBack">← Go back</a>
+          <h3>Editing map</h3>
 
-    <section id="mapSection" style="display:none; margin-top:2em;">
-      <h2>Map View</h2>
-      <div id="map" style="height: 400px;"></div>
-    </section>
+          <div class="form-group">
+            <label>Select a database</label>
+            <select id="dbSelect" disabled></select>
+          </div>
 
-    <!-- Leaflet JS (integrity and crossorigin removed) -->
-    <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
-    <script src="/script.js"></script>
-  </body>
+          <div class="form-group">
+            <label>Pick a name</label>
+            <input type="text" id="mapName" />
+          </div>
+
+          <div class="form-group">
+            <label>Unique map address</label>
+            <div class="url-box">
+              <input type="text" id="mapUrl" readonly />
+              <button id="copyBtn">📋</button>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Select which column to use as marker color</label>
+            <select id="markerColorSelect">
+              <option value="">None</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Visible columns</label>
+            <div id="visibleColumns"></div>
+          </div>
+
+          <div class="form-group">
+            <button id="saveMap">Save map</button>
+          </div>
+        </div>
+      </aside>
+
+      <main class="map-panel">
+        <div id="map"></div>
+      </main>
+    </div>
+  </div>
+
+  <script src="/script.js"></script>
+</body>
 </html>

@@ -1,0 +1,178 @@
+/* Reset and basic styles */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+  body {
+    font-family: "Segoe UI", sans-serif;
+    background: #1e1e2f;
+    color: #fff;
+    height: 100vh;
+    overflow: hidden;
+  }
+  
+  /* Layout */
+  #app {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+  }
+  
+  .topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #202942;
+    padding: 12px 20px;
+    font-size: 1.2rem;
+    box-shadow: 0 2px 4px #0003;
+  }
+  .logo {
+    font-weight: bold;
+  }
+  .menu {
+    position: relative;
+  }
+  .menu button {
+    font-size: 1.4rem;
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+  }
+  .dropdown {
+    position: absolute;
+    right: 0;
+    top: 40px;
+    background: #2f374f;
+    border-radius: 6px;
+    box-shadow: 0 2px 6px #0006;
+    display: none;
+    flex-direction: column;
+    z-index: 10;
+  }
+  .dropdown a {
+    padding: 10px 15px;
+    color: white;
+    text-decoration: none;
+  }
+  .dropdown a:hover {
+    background: #3e4b6d;
+  }
+  
+  .container {
+    display: flex;
+    flex: 1;
+    height: 100%;
+  }
+  
+  .sidebar {
+    width: 300px;
+    background: #282e3f;
+    padding: 20px;
+    overflow-y: auto;
+  }
+  .sidebar h2 {
+    margin-bottom: 15px;
+  }
+  
+  .map-panel {
+    flex: 1;
+    height: 100%;
+    position: relative;
+  }
+  #map {
+    width: 100%;
+    height: 100%;
+  }
+  
+  /* Map card style */
+  .map-card {
+    background: #39405c;
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .map-card:hover {
+    background: #475073;
+  }
+  .map-title {
+    font-weight: bold;
+    font-size: 1rem;
+  }
+  .map-subtitle {
+    font-size: 0.85rem;
+    color: #c7c7d7;
+  }
+  
+  /* -- FORM STYLES -- */
+.form-group {
+    margin: 15px 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .form-group label {
+    margin-bottom: 6px;
+    font-size: 0.9rem;
+    color: #c7c7d7;
+  }
+  .form-group input,
+  .form-group select {
+    padding: 8px 10px;
+    border: none;
+    border-radius: 4px;
+    font-size: 0.95rem;
+  }
+  .form-group input[readonly] {
+    background: #39405c;
+    color: #eee;
+  }
+  .url-box {
+    display: flex;
+  }
+  .url-box input {
+    flex: 1;
+  }
+  .url-box button {
+    margin-left: 6px;
+    padding: 0 12px;
+    cursor: pointer;
+    border: none;
+    border-radius: 4px;
+    background: #475073;
+    color: white;
+  }
+  #saveMap {
+    padding: 10px;
+    width: 100%;
+    background: #3cb371;
+    border: none;
+    border-radius: 4px;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+  }
+  #goBack {
+    display: inline-block;
+    margin-bottom: 10px;
+    color: #8fa6ff;
+    text-decoration: none;
+  }
+  #goBack:hover {
+    text-decoration: underline;
+  }
+  
+  /* Visible columns checkboxes */
+#visibleColumns label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 0.9rem;
+    color: #ddd;
+  }
+  #visibleColumns input {
+    margin-right: 8px;
+  }
+  
