@@ -68,7 +68,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!dbId) return mapSection.style.display = "none";
   
       markerGroup.clearLayers();
-      const res = await fetch(`/server/api/databases/${dbId}/pages`);
+      const res = await fetch(`/api/databases/${dbId}/pages`);
       const { results } = await res.json();
   
       // geocode all in parallel
